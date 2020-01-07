@@ -8235,6 +8235,45 @@ extract_job_on_completed (AutoarExtractor *extractor,
 }
 
 static void
+extract_job_on_request_passphrase (AutoarExtractor *extractor,
+                                   gpointer user_data)
+{
+  GtkWidget *dialog;
+  GtkWidget *entry;
+  GtkWidget *box;
+  gchar *passphrase = NULL;
+
+  dialog = gtk_dialog_new_with_buttons (_("Enter passphrase"),
+                                        NULL,
+                                        GTK_DIALOG_USE_HEADER_BAR,
+                                        _("Cancel"), GTK_RESPONSE_CANCEL,
+                                        _("Set"), GTK_RESPONSE_OK,
+                                        NULL);
+  box = gtk_box_new (GTK_ORIENTATION_VERTICAL, 10);
+  gtk_container_add (GTK_CONTAINER (gtk_dialog_get_content_area (GTK_DIALOG (dialog))), GTK_WIDGET (box));
+  entry = gtk_entry_new ();
+  passphrase = g_object_get_data (G_OBJECT (extractor), "passphrase");
+  if (passphrase != NULL) {
+    gtk_entry_set_text (GTK_ENTRY (entry), passphrase);
+  }
+
+  gtk_container_add (GTK_CONTAINER (box), entry);
+  gtk_widget_show_all (box);
+
+  if (gtk_dialog_run (GTK_DIALOG (dialog)) == GTK_RESPONSE_OK)
+  {
+    passphrase = g_strdup (gtk_entry_get_text (GTK_ENTRY (entry)));
+    g_object_set_data (G_OBJECT (extractor), "passphrase", passphrase);
+
+    autoar_extractor_set_passphrase (extractor, passphrase);
+  } else {
+    abort_job ((CommonJob *) user_data);
+  }
+
+  gtk_widget_destroy (dialog);
+}
+
+static void
 extract_job_on_scanned (AutoarExtractor *extractor,
                         guint            total_files,
                         gpointer         user_data)
@@ -8376,7 +8415,6 @@ extract_task_thread_func (GTask        *task,
 
         extractor = autoar_extractor_new (G_FILE (l->data),
                                           extract_job->destination_directory);
-
         autoar_extractor_set_notify_interval (extractor,
                                               PROGRESS_NOTIFY_INTERVAL);
         g_signal_connect (extractor, "scanned",
@@ -8393,6 +8431,9 @@ extract_task_thread_func (GTask        *task,
                           extract_job);
         g_signal_connect (extractor, "completed",
                           G_CALLBACK (extract_job_on_completed),
+                          extract_job);
+        g_signal_connect (extractor, "request-passphrase",
+                          G_CALLBACK (extract_job_on_request_passphrase),
                           extract_job);
 
         extract_job->archive_compressed_size = archive_compressed_sizes[i];
