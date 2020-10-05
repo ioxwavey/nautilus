@@ -1830,7 +1830,8 @@ report_delete_progress (CommonJob    *job,
         }
     }
 
-    if (elapsed < SECONDS_NEEDED_FOR_RELIABLE_TRANSFER_RATE)
+    if (elapsed < SECONDS_NEEDED_FOR_RELIABLE_TRANSFER_RATE ||
+        transfer_rate == 0)
     {
         if (files_left > 0)
         {
@@ -2220,7 +2221,8 @@ report_trash_progress (CommonJob    *job,
         }
     }
 
-    if (elapsed < SECONDS_NEEDED_FOR_RELIABLE_TRANSFER_RATE)
+    if (elapsed < SECONDS_NEEDED_FOR_RELIABLE_TRANSFER_RATE ||
+        transfer_rate == 0)
     {
         if (files_left > 0)
         {
@@ -4063,8 +4065,8 @@ report_copy_progress (CopyMoveJob  *copy_job,
         }
     }
 
-    if (elapsed < SECONDS_NEEDED_FOR_RELIABLE_TRANSFER_RATE &&
-        transfer_rate > 0)
+    if (elapsed < SECONDS_NEEDED_FOR_RELIABLE_TRANSFER_RATE ||
+        transfer_rate == 0)
     {
         if (source_info->num_files == 1)
         {
